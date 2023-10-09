@@ -133,7 +133,7 @@ class Fully_Cluster():
             for center in selected_cluster:
                 W.remove(center)
 
-        self.is_success = True if len(ACTIVE_POINTS)-n_covered_points > (1+self.eps)*self.z else False
+        self.is_success = True if len(ACTIVE_POINTS)-n_covered_points <= (1+self.eps)*self.z else False
 
     def fully_true_radius(self):
         dists = []
@@ -206,6 +206,7 @@ def get_centers(data_dir, s, k, t, z, tau, eps, d_min, d_max):
             level.fully_k_center_greedy()
             level.fully_true_radius() ## NOTE: compute the true radius, just for testing, we can remove this line later
             if level.is_success is True:
+                print(level.radius)
                 print(level.true_radius)
                 return level.fully_get_centers()
         print("ERROR!")
@@ -213,6 +214,5 @@ def get_centers(data_dir, s, k, t, z, tau, eps, d_min, d_max):
 
 
 if __name__ == "__main__":
-    result_centers = get_centers(data_dir ="./data", s=1, k=2, t=100, z=9, tau=0.1, eps=0.1, d_min=0.1, d_max=10)
+    result_centers = get_centers(data_dir ="./data", s=1, k=2, t=100, z=10, tau=0.1, eps=0.1, d_min=0.1, d_max=15)
     print(result_centers)
-          
