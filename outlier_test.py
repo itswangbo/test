@@ -4,12 +4,15 @@ import sys
 import os
 import csv
 from queue import Queue
+from datetime import datetime
+import numba as nb
 
 LABEL = 0 # NOTE: to label each point
 N_INSTANCE = 0
 N_POINTS = 0
 ACTIVE_POINTS = {} # NOTE: label to point
 POINTS_IN_DAYS = Queue() # NOTE: a queue of list
+
 
 class Fully_Cluster():
     def __init__(self, k, t, z, eps, radius):
@@ -28,7 +31,7 @@ class Fully_Cluster():
         self.selected_clusters = []
         self.is_success = False
         self.true_radius = 0
-
+    @nb.jit()
     def fully_distance(self, f_point_index, s_point_index):
         f_point = ACTIVE_POINTS[f_point_index]
         s_point = ACTIVE_POINTS[s_point_index]
@@ -148,6 +151,17 @@ class Fully_Cluster():
 
     def fully_get_centers(self):
         return [ACTIVE_POINTS[center_index] for center_index in self.selected_centers]
+    
+    def fully_get_cardinality(self):
+        cars = []
+        sz = len(self.selected_clusters)
+        for i in range(sz):
+            car = 0
+            for j in self.selected_clusters[i]:
+                car = car + len(self.clusters[j])
+            cars.append(car)
+        return cars
+
 
 ## BELOW IS THE MAIN PART
 
@@ -160,7 +174,11 @@ def read_next_day_points(levels, file_path: str):
 
         points_in_the_day = []
         for row in csv_reader:
-            cur_point = row[1:-1]
+            if int(row[0])%50 == 0:
+                print("current row: ", row[0])
+                print("current time: ", datetime.now().strftime("%H:%M:%S"))
+            # cur_point = row[1:-1]
+            cur_point = row[1:385]
             ACTIVE_POINTS[LABEL] = cur_point
             N_POINTS = N_POINTS+1
             points_in_the_day.append(LABEL)
@@ -208,11 +226,43 @@ def get_centers(data_dir, s, k, t, z, tau, eps, d_min, d_max):
             if level.is_success is True:
                 print(level.radius)
                 print(level.true_radius)
+                cars = level.fully_get_cardinality()
+                print(cars)
                 return level.fully_get_centers()
         print("ERROR!")
         return None
 
 
-if __name__ == "__main__":
-    result_centers = get_centers(data_dir ="./data", s=1, k=2, t=100, z=10, tau=0.1, eps=0.1, d_min=0.1, d_max=15)
-    print(result_centers)
+
+def main():
+    #result_centers = get_centers(data_dir ="./data", s=1, k=2, t=40, z=10, tau=1, eps=0.1, d_min=1, d_max=15)
+    result_centers = get_centers(data_dir ="./data", s=1, k=2, t=40, z=0, tau=0.05, eps=0.1, d_min=1, d_max=2)
+    print(len(result_centers))
+
+
+
+import cProfile
+if __name__ == '__main__':
+    cProfile.run('main()')
+
+
+
+# min_dist = sys.float_info.max
+# max_dist = 0
+# file_path = "./data/tweets_bert_2018_0.csv" ## NOTE: to be edited
+
+# with open(file_path, 'r') as csv_file:
+#     csv_reader = csv.reader(csv_file)
+#     next(csv_reader) # skip the header
+
+#     points_in_the_day = []
+#     for row in csv_reader:
+#         cur_point = row[1:-1]
+#         points_in_the_day.append(cur_point)
+#     lens = len(points_in_the_day)
+#     for i in range(lens):
+#         for j in range(i+1, lens):
+#             dist = math.sqrt(sum([(float(a)-float(b))**2 for (a, b) in list(zip(points_in_the_day[i], points_in_the_day[j]))]))
+#             min_dist = min(min_dist, dist)
+#             max_dist = max(max_dist, dist)
+#     print(min_dist, max_dist)
