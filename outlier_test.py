@@ -5,14 +5,13 @@ import os
 import csv
 from queue import Queue
 from datetime import datetime
-import numba as nb
+import numpy as np
 
 LABEL = 0 # NOTE: to label each point
 N_INSTANCE = 0
 N_POINTS = 0
 ACTIVE_POINTS = {} # NOTE: label to point
 POINTS_IN_DAYS = Queue() # NOTE: a queue of list
-
 
 class Fully_Cluster():
     def __init__(self, k, t, z, eps, radius):
@@ -31,11 +30,11 @@ class Fully_Cluster():
         self.selected_clusters = []
         self.is_success = False
         self.true_radius = 0
-    @nb.jit()
+        
     def fully_distance(self, f_point_index, s_point_index):
         f_point = ACTIVE_POINTS[f_point_index]
         s_point = ACTIVE_POINTS[s_point_index]
-        return math.sqrt(sum([(float(a)-float(b))**2 for (a, b) in list(zip(f_point, s_point))]))
+        return np.sqrt(np.sum((np.array(f_point).astype(np.float64) - np.array(s_point).astype(np.float64)) ** 2))
 
     def insert_last_center(self, point_index):
         self.clusters[self.n_cluster].add(point_index)
@@ -136,6 +135,7 @@ class Fully_Cluster():
             for center in selected_cluster:
                 W.remove(center)
 
+        print(f"radius: {self.radius}, uncovered clusters: {len(W)}, covered points:{n_covered_points}, centers: {len(self.selected_centers)}")
         self.is_success = True if len(ACTIVE_POINTS)-n_covered_points <= (1+self.eps)*self.z else False
 
     def fully_true_radius(self):
@@ -224,26 +224,24 @@ def get_centers(data_dir, s, k, t, z, tau, eps, d_min, d_max):
             level.fully_k_center_greedy()
             level.fully_true_radius() ## NOTE: compute the true radius, just for testing, we can remove this line later
             if level.is_success is True:
-                print(level.radius)
-                print(level.true_radius)
-                cars = level.fully_get_cardinality()
-                print(cars)
+                # print(level.radius)
+                # print(level.true_radius)
+                # cars = level.fully_get_cardinality()
+                # print(cars)
                 return level.fully_get_centers()
         print("ERROR!")
         return None
 
-
-
 def main():
-    #result_centers = get_centers(data_dir ="./data", s=1, k=2, t=40, z=10, tau=1, eps=0.1, d_min=1, d_max=15)
-    result_centers = get_centers(data_dir ="./data", s=1, k=2, t=40, z=0, tau=0.05, eps=0.1, d_min=1, d_max=2)
+    result_centers = get_centers(data_dir ="./data", s=1, k=2, t=350, z=0, tau=0.1, eps=0.1, d_min=0.4, d_max=0.6)
     print(len(result_centers))
 
-
-
-import cProfile
 if __name__ == '__main__':
-    cProfile.run('main()')
+    main()
+
+# import cProfile
+# if __name__ == '__main__':
+#     cProfile.run('main()')
 
 
 
