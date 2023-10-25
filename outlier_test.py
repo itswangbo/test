@@ -14,10 +14,10 @@ ACTIVE_POINTS = {} # NOTE: label to point
 POINTS_IN_DAYS = Queue() # NOTE: a queue of list
 
 class Fully_Cluster():
-    def __init__(self, k, t, z, eps, radius):
+    def __init__(self, k, t, z_ratio, eps, radius):
         self.k = k
         self.t = t
-        self.z = z
+        self.z_ratio = z_ratio
         self.eps = eps
         self.radius = radius
 
@@ -136,7 +136,7 @@ class Fully_Cluster():
                 W.remove(center)
 
         print(f"radius: {self.radius}, uncovered clusters: {len(W)}, covered points:{n_covered_points}, centers: {len(self.selected_centers)}")
-        self.is_success = True if len(ACTIVE_POINTS)-n_covered_points <= (1+self.eps)*self.z else False
+        self.is_success = True if N_POINTS-n_covered_points <= self.z_ratio*(1.0+self.eps)*N_POINTS else False
 
     def fully_true_radius(self):
         dists = []
@@ -147,7 +147,7 @@ class Fully_Cluster():
                 dist = min(dist, d)
             dists.append(dist)
         dists.sort()
-        self.true_radius = dists[-math.floor((1+self.eps)*self.z+1)] # NOTE: need to plus 1
+        self.true_radius = dists[-math.floor((1.0+self.eps)*self.z_ratio*N_POINTS+1)] # NOTE: need to plus 1
 
     def fully_get_centers(self):
         return [ACTIVE_POINTS[center_index] for center_index in self.selected_centers]
@@ -233,7 +233,7 @@ def get_centers(data_dir, s, k, t, z, tau, eps, d_min, d_max):
         return None
 
 def main():
-    result_centers = get_centers(data_dir ="./data", s=1, k=2, t=350, z=0, tau=0.1, eps=0.1, d_min=0.4, d_max=0.6)
+    result_centers = get_centers(data_dir ="./data", s=1, k=2, t=350, z_ratio=0.1, tau=0.1, eps=0.1, d_min=0.4, d_max=0.6)
     print(len(result_centers))
 
 if __name__ == '__main__':
